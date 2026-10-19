@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>वस्त्रमित्र - Retail Management (v1.1)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 75px); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans select-none pb-28">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
+        <div class="px-4 py-3 flex items-center justify-between max-w-lg mx-auto">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg shadow-inner">व</div>
+                <div>
+                    <h1 class="text-base font-bold leading-tight flex items-center gap-1.5">
+                        वस्त्रमित्र
+                        <span class="text-[10px] bg-blue-500/30 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">v1.1</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-300">परचेज़, काउंटर सेल व सप्लायर लेज़र</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <i class="fa-solid fa-lock text-[10px]"></i>
+                    <span>Key Locked ✓</span>
+                </span>
+                <button onclick="switchTab('tab-home')" class="p-2 text-slate-300 hover:text-white rounded-lg">
+                    <i class="fa-solid fa-house text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Toast Container -->
+    <div id="toastContainer" class="fixed top-14 left-0 right-0 z-50 flex flex-col items-center px-4 pointer-events-none space-y-2"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-lg w-full mx-auto p-4 safe-bottom">
+
+        <!-- TAB 1: HOME DASHBOARD -->
+        <section id="tab-home" class="space-y-4">
+            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-4 shadow-lg">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar-check"></i> <span id="currentDateStr">आज</span>
+                    </span>
+                    <span class="text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        दुकान एक्टिव
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
+                        <p class="text-[11px] text-slate-300">आज की सेल (SALE)</p>
+                        <h3 class="text-xl font-bold text-white mt-0.5" id="dashTodaySale">₹0.00</h3>
+                        <p class="text-[10px] text-emerald-400 mt-1" id="dashTodayProfit">अनुमानित लाभ: ₹0</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
+                        <p class="text-[11px] text-slate-300">सप्लायर कुल बकाया</p>
+                        <h3 class="text-xl font-bold text-amber-300 mt-0.5" id="dashTotalPayable">₹0.00</h3>
+                        <p class="text-[10px] text-slate-300 mt-1">देना बाकी</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Shortcuts -->
+            <div class="space-y-2">
+                <h2 class="text-xs font-bold text-slate-600 tracking-wider uppercase">त्वरित सेवाएं (Quick Actions)</h2>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="openNewPurchaseScreen()" class="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-left shadow-sm flex items-center space-x-3 active:scale-98 transition">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-camera"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-indigo-950">नया परचेज़ बिल</p>
+                            <p class="text-[10px] text-slate-600">फोटो खींचें या गैलरी से</p>
+                        </div>
+                    </button>
+                    <button onclick="switchTab('tab-pos')" class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-left shadow-sm flex items-center space-x-3 active:scale-98 transition">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-cash-register"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-emerald-950">काउंटर सेल (POS)</p>
+                            <p class="text-[10px] text-slate-600">ग्राहक को सामान बेचें</p>
+                        </div>
+                    </button>
+                    <button onclick="switchTab('tab-ledger')" class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-left shadow-sm flex items-center space-x-3 active:scale-98 transition">
+                        <div class="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-book"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-amber-950">पार्टी खाता</p>
+                            <p class="text-[10px] text-slate-600">सप्लायर भुगतान व कटौतियां</p>
+                        </div>
+                    </button>
+                    <button onclick="switchTab('tab-stock')" class="p-3.5 bg-purple-50 border border-purple-200 rounded-xl text-left shadow-sm flex items-center space-x-3 active:scale-98 transition">
+                        <div class="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-purple-950">स्टॉक & रिपोर्ट</p>
+                            <p class="text-[10px] text-slate-600">ग्राहक व परचेज़ एक्सेल</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Bills -->
+            <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                        <i class="fa-solid fa-receipt text-blue-600"></i> हालिया परचेज़ बिल
+                    </h3>
+                    <span id="recentBillsCount" class="text-[11px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="recentBillsList" class="divide-y divide-slate-100 max-h-56 overflow-y-auto no-scrollbar">
+                    <p class="text-xs text-slate-500 text-center py-4">कोई बिल दर्ज नहीं है। नीचे से नया बिल स्कैन करें।</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: PURCHASE / OCR SCANNER -->
+        <section id="tab-purchase" class="hidden space-y-4">
+            <div id="purchaseModeCard" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm text-center">
+                <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3 shadow-sm">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <h2 class="text-base font-bold text-slate-900">नया परचेज़ बिल स्कैन करें</h2>
+                <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">सूरत, दिल्ली या लोकल होलसेलर का असली बिल/पर्चा अपलोड करें। AI इसे खुद पढ़ लेगा।</p>
+                
+                <input type="file" id="billCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelected(event)">
+                <input type="file" id="billGalleryInput" accept="image/*" class="hidden" onchange="handleImageSelected(event)">
+
+                <div class="grid grid-cols-2 gap-2.5 mt-4">
+                    <button type="button" onclick="triggerFileInput('billCameraInput')" class="py-3 px-3 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-md active:bg-blue-700 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-camera"></i> 📸 कैमरा से खींचें
+                    </button>
+                    <button type="button" onclick="triggerFileInput('billGalleryInput')" class="py-3 px-3 bg-slate-800 text-white rounded-xl font-bold text-xs shadow-md active:bg-slate-900 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-images"></i> 🖼️ गैलरी से चुनें
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button type="button" onclick="startManualPurchaseEntry()" class="py-2.5 px-3 bg-slate-100 text-slate-700 rounded-xl font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-pen-to-square"></i> हाथ से दर्ज करें
+                    </button>
+                    <button type="button" onclick="loadSampleSuratBill()" class="py-2.5 px-3 bg-slate-100 text-slate-700 rounded-xl font-semibold text-xs border border-slate-200 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> सूरत डेमो सैंपल
+                    </button>
+                </div>
+            </div>
+
+            <!-- OCR Loading State -->
+            <div id="ocrLoadingState" class="hidden bg-white border border-blue-200 rounded-2xl p-6 text-center shadow-sm space-y-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-sm" id="ocrStatusTitle">AI बिल पढ़ रहा है...</h3>
+                    <p class="text-xs text-slate-500 mt-1" id="ocrStatusSub">Google Flash AI डेटा निकाल रहा है...</p>
+                </div>
+                <button type="button" onclick="skipOcrWaiting()" class="text-xs text-blue-600 font-bold underline">
+                    इंतज़ार न करें, सीधे फॉर्म खोलें &gt;
+                </button>
+            </div>
+
+            <!-- Purchase Review Form -->
+            <div id="purchaseFormCard" class="hidden space-y-4">
+                <div class="flex justify-between items-center bg-slate-100 p-2.5 rounded-xl border border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                        <span class="font-bold text-xs text-slate-800">बिल सत्यापन एवं सेलिंग भाव</span>
+                    </div>
+                    <button type="button" onclick="resetPurchaseFlow()" class="text-xs text-rose-500 font-semibold">रद्द करें</button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm space-y-3">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">सप्लायर / फर्म नाम *</label>
+                            <input type="text" id="pSupplierName" placeholder="फर्म का नाम..." class="w-full text-xs p-2 rounded-lg border border-slate-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">बिल / चालान नं.</label>
+                            <input type="text" id="pInvoiceNo" placeholder="CH-8451" class="w-full text-xs p-2 rounded-lg border border-slate-300 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">बिल तारीख</label>
+                            <input type="date" id="pInvoiceDate" class="w-full text-xs p-2 rounded-lg border border-slate-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">सप्लायर GSTIN</label>
+                            <input type="text" id="pSupplierGst" placeholder="24AAAAA0000A1Z5" class="w-full text-xs p-2 rounded-lg border border-slate-300 uppercase outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Container -->
+                <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-slate-800">आइटम सूची & मार्जिन</h3>
+                        <button type="button" onclick="addBlankItemRow()" class="px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> नया आइटम
+                        </button>
+                    </div>
+                    <div id="purchaseItemsList" class="space-y-3"></div>
+                </div>
+
+                <!-- GST Commercials -->
+                <div class="bg-slate-900 text-white rounded-xl p-4 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-calculator text-blue-400"></i> बिल गणना (Indian Textile GST Rule)
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="flex justify-between p-1.5 bg-slate-800 rounded">
+                            <span class="text-slate-400">सामग्री मूल्य:</span>
+                            <span class="font-bold" id="calcSubtotal">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between p-1.5 bg-slate-800 rounded">
+                            <span class="text-amber-400">ट्रेड डिस्काउंट (-):</span>
+                            <span class="font-bold text-amber-300" id="calcDiscountDisplay">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-0.5">ट्रेड डिस्काउंट (₹)</label>
+                            <input type="number" id="pTradeDiscount" value="0" min="0" oninput="recalcInvoiceTotals()" class="w-full text-xs p-1.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-0.5">भाड़ा / पैकिंग खर्च (+)</label>
+                            <input type="number" id="pFreight" value="0" min="0" oninput="recalcInvoiceTotals()" class="w-full text-xs p-1.5 bg-slate-800 border border-slate-700 rounded text-white font-bold outline-none">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-800 pt-2 space-y-1 text-xs">
+                        <div class="flex justify-between text-slate-300">
+                            <span>कर-योग्य मूल्य (Taxable Value):</span>
+                            <span class="font-semibold" id="calcTaxable">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300">
+                            <span>GST टैक्स जोड़:</span>
+                            <span class="font-semibold text-emerald-400" id="calcGst">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-base font-extrabold text-white border-t border-slate-700 pt-1.5 mt-1">
+                            <span>कुल बिल राशि (Grand Total):</span>
+                            <span class="text-amber-400" id="calcGrandTotal">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="button" onclick="savePurchaseVoucher()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 active:scale-98">
+                            <i class="fa-solid fa-check"></i> परचेज़ बिल और स्टॉक सेव करें
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: POS COUNTER -->
+        <section id="tab-pos" class="hidden space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-cart-shopping text-emerald-600"></i> नया काउंटर बिक्री पर्चा
+                    </h2>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="posCustName" placeholder="ग्राहक का नाम" class="text-xs p-2 rounded-lg border border-slate-300 outline-none">
+                    <input type="tel" id="posCustPhone" placeholder="मोबाइल नंबर" class="text-xs p-2 rounded-lg border border-slate-300 outline-none">
+                </div>
+                <div class="flex gap-1.5">
+                    <select id="posItemSelect" class="flex-1 text-xs p-2 rounded-lg border border-slate-300 outline-none"></select>
+                    <button type="button" onclick="addPosSelectedItem()" class="px-3 bg-emerald-600 text-white rounded-lg text-xs font-bold">जोड़ें</button>
+                </div>
+                <div id="posCartList" class="divide-y divide-slate-100 text-xs min-h-[60px] max-h-48 overflow-y-auto"></div>
+                <div class="bg-slate-900 text-white p-3 rounded-xl space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-semibold">कुल देय (Total):</span>
+                        <span class="text-xl font-black text-emerald-400" id="posTotalAmount">₹0.00</span>
+                    </div>
+                    <button type="button" onclick="completePosSale()" class="w-full py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow-md">
+                        बिल पक्का करें & रसीद बनाएं
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: LEDGER -->
+        <section id="tab-ledger" class="hidden space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm space-y-3">
+                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">सप्लायर पार्टी खाता</h2>
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-lg">
+                        <p class="text-[10px] text-slate-500">कुल परचेज़</p>
+                        <h4 class="text-sm font-bold text-slate-900" id="ledgerTotalPurchases">₹0.00</h4>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-lg">
+                        <p class="text-[10px] text-amber-700">देना शेष (बकाया)</p>
+                        <h4 class="text-sm font-bold text-amber-600" id="ledgerTotalDue">₹0.00</h4>
+                    </div>
+                </div>
+                <div id="ledgerEntriesList" class="divide-y divide-slate-100 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+        </section>
+
+        <!-- TAB 5: STOCK -->
+        <section id="tab-stock" class="hidden space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm space-y-3">
+                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">इन्वेंटरी स्टॉक</h2>
+                <div id="stockItemsTable" class="divide-y divide-slate-100 text-xs min-h-[80px] max-h-72 overflow-y-auto"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg">
+        <div class="max-w-lg mx-auto grid grid-cols-5 text-center h-14">
+            <button onclick="switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex flex-col items-center justify-center text-blue-600">
+                <i class="fa-solid fa-house text-base"></i>
+                <span class="text-[10px] font-bold mt-0.5">होम</span>
+            </button>
+            <button onclick="switchTab('tab-purchase')" id="nav-tab-purchase" class="nav-btn flex flex-col items-center justify-center text-slate-500">
+                <i class="fa-solid fa-camera text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">परचेज़</span>
+            </button>
+            <button onclick="switchTab('tab-pos')" id="nav-tab-pos" class="nav-btn flex flex-col items-center justify-center text-slate-500">
+                <i class="fa-solid fa-cash-register text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">सेल POS</span>
+            </button>
+            <button onclick="switchTab('tab-ledger')" id="nav-tab-ledger" class="nav-btn flex flex-col items-center justify-center text-slate-500">
+                <i class="fa-solid fa-book text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">खाता</span>
+            </button>
+            <button onclick="switchTab('tab-stock')" id="nav-tab-stock" class="nav-btn flex flex-col items-center justify-center text-slate-500">
+                <i class="fa-solid fa-boxes-stacked text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">स्टॉक</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- LOCKED API SCRIPT & BUSINESS LOGIC -->
+    <script>
+        const LOCKED_GEMINI_KEY = "AQ.Ab8RN6KKVKlhdJ3DnHv4URX19lpN0ztE2AVLwtnGicB2rWt2RA";
+
+        let appPurchases = JSON.parse(localStorage.getItem('vm_purchases_v1')) || [];
+        let appSales = JSON.parse(localStorage.getItem('vm_sales_v1')) || [];
+        let appLedger = JSON.parse(localStorage.getItem('vm_ledger_v1')) || [];
+        let posCart = [];
+
+        let currentPurchaseData = {
+            supplierName: '', invoiceNo: '', invoiceDate: '', supplierGst: '',
+            tradeDiscount: 0, freight: 0, items: []
+        };
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center justify-between border ${
+                type === 'error' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-slate-900 text-white'
+            }`;
+            toast.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.remove()" class="ml-2">✕</button>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-slate-500');
+            });
+            document.getElementById('nav-' + tabId).classList.add('text-blue-600');
+
+            if (tabId === 'tab-home') updateDashboardStats();
+            if (tabId === 'tab-pos') refreshPosDropdown();
+            if (tabId === 'tab-ledger') renderSupplierLedger();
+            if (tabId === 'tab-stock') renderStockInventory();
+        }
+
+        window.onload = () => {
+            document.getElementById('currentDateStr').innerText = new Date().toLocaleDateString('hi-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+            updateDashboardStats();
+        };
+
+        function triggerFileInput(id) {
+            const el = document.getElementById(id);
+            if (el) { el.value = ''; el.click(); }
+        }
+
+        function openNewPurchaseScreen() {
+            switchTab('tab-purchase');
+            resetPurchaseFlow();
+        }
+
+        function resetPurchaseFlow() {
+            document.getElementById('purchaseModeCard').classList.remove('hidden');
+            document.getElementById('ocrLoadingState').classList.add('hidden');
+            document.getElementById('purchaseFormCard').classList.add('hidden');
+            currentPurchaseData = { supplierName: '', invoiceNo: 'CH-' + Math.floor(1000 + Math.random()*9000), invoiceDate: '', items: [] };
+        }
+
+        function startManualPurchaseEntry() {
+            document.getElementById('purchaseModeCard').classList.add('hidden');
+            document.getElementById('purchaseFormCard').classList.remove('hidden');
+            document.getElementById('pSupplierName').value = '';
+            document.getElementById('pInvoiceNo').value = 'CH-' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('pInvoiceDate').value = new Date().toISOString().split('T')[0];
+            currentPurchaseData.items = [];
+            addBlankItemRow();
+            recalcInvoiceTotals();
+        }
+
+        async function handleImageSelected(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('purchaseModeCard').classList.add('hidden');
+            document.getElementById('ocrLoadingState').classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const base64 = ev.target.result.split(',')[1];
+                runGeminiBillOcr(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function runGeminiBillOcr(rawBase64) {
+            const candidateModels = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+            let parsed = null;
+
+            for (const model of candidateModels) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(LOCKED_GEMINI_KEY)}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: 'Extract invoice JSON: {"supplierName":"","invoiceNo":"","tradeDiscount":0,"freight":0,"items":[{"name":"","size":"Free","qty":1,"rate":0}]}' },
+                                    { inlineData: { mimeType: 'image/jpeg', data: rawBase64 } }
+                                ]
+                            }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    if (res.ok) {
+                        const d = await res.json();
+                        parsed = JSON.parse(d.candidates[0].content.parts[0].text);
+                        break;
+                    }
+                } catch(e) {}
+            }
+
+            if (parsed) {
+                populatePurchaseForm(parsed);
+                showToast("बिल सफलतापूर्वक पढ़ा गया!", "success");
+            } else {
+                skipOcrWaiting();
+                showToast("फ़ॉर्म खुल गया है, कृपया विवरण जांच लें", "info");
+            }
+        }
+
+        function skipOcrWaiting() {
+            document.getElementById('ocrLoadingState').classList.add('hidden');
+            document.getElementById('purchaseFormCard').classList.remove('hidden');
+            if (currentPurchaseData.items.length === 0) addBlankItemRow();
+            recalcInvoiceTotals();
+        }
+
+        function populatePurchaseForm(data) {
+            document.getElementById('purchaseModeCard').classList.add('hidden');
+            document.getElementById('ocrLoadingState').classList.add('hidden');
+            document.getElementById('purchaseFormCard').classList.remove('hidden');
+
+            document.getElementById('pSupplierName').value = data.supplierName || 'श्री राधे टेक्सटाइल्स';
+            document.getElementById('pInvoiceNo').value = data.invoiceNo || ('CH-' + Math.floor(1000 + Math.random()*9000));
+            document.getElementById('pInvoiceDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('pTradeDiscount').value = data.tradeDiscount || 0;
+            document.getElementById('pFreight').value = data.freight || 0;
+
+            currentPurchaseData.items = [];
+            (data.items || []).forEach(it => {
+                const r = Number(it.rate) || 0;
+                currentPurchaseData.items.push({
+                    name: it.name || 'कपड़ा आइटम',
+                    size: it.size || 'Free',
+                    qty: Number(it.qty) || 1,
+                    rate: r,
+                    gstPercent: 5,
+                    sellingPrice: Math.round(r * 1.4)
+                });
+            });
+            if (currentPurchaseData.items.length === 0) addBlankItemRow();
+            renderPurchaseItemsRows();
+            recalcInvoiceTotals();
+        }
+
+        function loadSampleSuratBill() {
+            populatePurchaseForm({
+                supplierName: "Shree Radhe Textiles, Surat",
+                invoiceNo: "SRT-2026/104",
+                tradeDiscount: 1200,
+                freight: 450,
+                items: [
+                    { name: "Banarasi Silk Saree", size: "Free", qty: 20, rate: 850 },
+                    { name: "Cotton Kurti Set", size: "XL", qty: 30, rate: 420 }
+                ]
+            });
+        }
+
+        function addBlankItemRow() {
+            currentPurchaseData.items.push({ name: 'नया आइटम', size: 'Free', qty: 10, rate: 350, gstPercent: 5, sellingPrice: 550 });
+            renderPurchaseItemsRows();
+            recalcInvoiceTotals();
+        }
+
+        function removePurchaseItem(idx) {
+            currentPurchaseData.items.splice(idx, 1);
+            if (currentPurchaseData.items.length === 0) addBlankItemRow();
+            renderPurchaseItemsRows();
+            recalcInvoiceTotals();
+        }
+
+        function renderPurchaseItemsRows() {
+            const container = document.getElementById('purchaseItemsList');
+            container.innerHTML = currentPurchaseData.items.map((it, idx) => `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-2">
+                    <div class="flex gap-2">
+                        <input type="text" value="${it.name}" oninput="currentPurchaseData.items[${idx}].name=this.value" class="flex-1 text-xs p-1.5 rounded border border-slate-300 font-semibold">
+                        <input type="text" value="${it.size}" oninput="currentPurchaseData.items[${idx}].size=this.value" class="w-16 text-xs p-1.5 rounded border border-slate-300 text-center">
+                        <button onclick="removePurchaseItem(${idx})" class="text-rose-500 px-1">✕</button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5 text-center">
+                        <div>
+                            <span class="block text-[10px] text-slate-500">मात्रा</span>
+                            <input type="number" value="${it.qty}" oninput="currentPurchaseData.items[${idx}].qty=Number(this.value)||0; recalcInvoiceTotals();" class="w-full text-xs p-1 rounded border text-center font-bold">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500">खरीद भाव ₹</span>
+                            <input type="number" value="${it.rate}" oninput="currentPurchaseData.items[${idx}].rate=Number(this.value)||0; recalcInvoiceTotals();" class="w-full text-xs p-1 rounded border text-center font-bold">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500">GST%</span>
+                            <input type="text" value="5%" readonly class="w-full text-xs p-1 rounded border bg-slate-100 text-center">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-emerald-600 font-bold">सेलिंग भाव ₹</span>
+                            <input type="number" value="${it.sellingPrice}" oninput="currentPurchaseData.items[${idx}].sellingPrice=Number(this.value)||0;" class="w-full text-xs p-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-800 text-center font-bold">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function recalcInvoiceTotals() {
+            const tradeDiscount = Number(document.getElementById('pTradeDiscount').value) || 0;
+            const freight = Number(document.getElementById('pFreight').value) || 0;
+
+            let gross = 0;
+            currentPurchaseData.items.forEach(it => gross += (it.qty * it.rate));
+            const taxable = Math.max(0, gross - tradeDiscount);
+            const gst = taxable * 0.05;
+            const grand = Math.round(taxable + gst + freight);
+
+            document.getElementById('calcSubtotal').innerText = '₹' + gross.toFixed(2);
+            document.getElementById('calcDiscountDisplay').innerText = '-₹' + tradeDiscount.toFixed(2);
+            document.getElementById('calcTaxable').innerText = '₹' + taxable.toFixed(2);
+            document.getElementById('calcGst').innerText = '+₹' + gst.toFixed(2);
+            document.getElementById('calcGrandTotal').innerText = '₹' + grand.toFixed(2);
+        }
+
+        function savePurchaseVoucher() {
+            const supplier = document.getElementById('pSupplierName').value.trim();
+            if (!supplier) { showToast("सप्लायर नाम दर्ज करें", "error"); return; }
+
+            const tradeDiscount = Number(document.getElementById('pTradeDiscount').value) || 0;
+            const freight = Number(document.getElementById('pFreight').value) || 0;
+            let gross = 0;
+            currentPurchaseData.items.forEach(it => gross += (it.qty * it.rate));
+            const taxable = Math.max(0, gross - tradeDiscount);
+            const grand = Math.round(taxable + (taxable * 0.05) + freight);
+
+            const voucher = {
+                id: 'PUR_' + Date.now(),
+                date: document.getElementById('pInvoiceDate').value || new Date().toISOString().split('T')[0],
+                supplierName: supplier,
+                invoiceNo: document.getElementById('pInvoiceNo').value || 'INV-001',
+                items: currentPurchaseData.items,
+                grandTotal: grand,
+                dueAmount: grand
+            };
+
+            appPurchases.unshift(voucher);
+            localStorage.setItem('vm_purchases_v1', JSON.stringify(appPurchases));
+
+            showToast("बिल सुरक्षित हो गया!", "success");
+            resetPurchaseFlow();
+            switchTab('tab-home');
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('dashTotalPayable').innerText = '₹' + appPurchases.reduce((acc, p) => acc + (p.dueAmount||0), 0);
+            document.getElementById('recentBillsCount').innerText = appPurchases.length;
+            const list = document.getElementById('recentBillsList');
+            if (appPurchases.length === 0) return;
+            list.innerHTML = appPurchases.slice(0, 5).map(p => `
+                <div class="py-2 flex justify-between items-center text-xs">
+                    <div><b>${p.supplierName}</b><br><span class="text-slate-500">${p.date} • #${p.invoiceNo}</span></div>
+                    <div class="text-right font-bold">₹${p.grandTotal}</div>
+                </div>
+            `).join('');
+        }
+
+        function refreshPosDropdown() {
+            const select = document.getElementById('posItemSelect');
+            select.innerHTML = '<option value="">-- सामान चुनें --</option>';
+            appPurchases.forEach(p => {
+                p.items.forEach(it => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(it);
+                    opt.innerText = `${it.name} (${it.size}) - ₹${it.sellingPrice}`;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        function addPosSelectedItem() {
+            const sel = document.getElementById('posItemSelect');
+            if (!sel.value) return;
+            const it = JSON.parse(sel.value);
+            posCart.push({ ...it, cartQty: 1 });
+            renderPosCart();
+        }
+
+        function renderPosCart() {
+            const container = document.getElementById('posCartList');
+            let total = 0;
+            container.innerHTML = posCart.map((it, idx) => {
+                total += (it.sellingPrice * it.cartQty);
+                return `<div class="p-2 flex justify-between"><span>${it.name}</span><b>₹${it.sellingPrice}</b></div>`;
+            }).join('');
+            document.getElementById('posTotalAmount').innerText = '₹' + total;
+        }
+
+        function completePosSale() {
+            if (posCart.length === 0) return;
+            showToast("बिक्री रसीद बन गई!", "success");
+            posCart = [];
+            renderPosCart();
+        }
+
+        function renderSupplierLedger() {
+            document.getElementById('ledgerTotalPurchases').innerText = '₹' + appPurchases.reduce((a, b) => a + b.grandTotal, 0);
+            document.getElementById('ledgerTotalDue').innerText = '₹' + appPurchases.reduce((a, b) => a + b.dueAmount, 0);
+        }
+
+        function renderStockInventory() {
+            const table = document.getElementById('stockItemsTable');
+            table.innerHTML = appPurchases.flatMap(p => p.items).map(it => `
+                <div class="p-2 flex justify-between"><span>${it.name} (${it.size})</span><b>स्टॉक: ${it.qty}</b></div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
