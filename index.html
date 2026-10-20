@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>वस्त्रमित्र - Retail Management (v1.8)</title>
+    <title>वस्त्रमित्र - Retail Management (v1.9)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -22,7 +22,7 @@
                 <div>
                     <h1 class="text-base font-bold leading-tight flex items-center gap-1.5">
                         वस्त्रमित्र
-                        <span class="text-[10px] bg-blue-500/30 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">v1.8</span>
+                        <span class="text-[10px] bg-blue-500/30 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">v1.9</span>
                     </h1>
                     <p class="text-[11px] text-slate-300">परचेज़, काउंटर सेल व सप्लायर लेज़र</p>
                 </div>
@@ -50,7 +50,7 @@
                 <button onclick="closeKeyModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
             </div>
             <p class="text-xs text-slate-600">
-                Google AI Studio से कॉपी की गई Key (AQ.Ab8...) यहाँ पेस्ट करें। यह आपके फ़ोन में हमेशा सुरक्षित रहेगी।
+                Google AI Studio से कॉपी की गई Key (AQ.Ab8...) यहाँ पेस्ट करें।
             </p>
             <input type="text" id="modalKeyInput" placeholder="AQ.Ab8..." class="w-full text-xs p-2.5 border border-slate-300 rounded-xl outline-none font-mono">
             <div class="flex gap-2 pt-1">
@@ -175,7 +175,7 @@
                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
                 <div>
                     <h3 class="font-bold text-slate-800 text-sm" id="ocrStatusTitle">AI बिल पढ़ रहा है...</h3>
-                    <p class="text-xs text-slate-500 mt-1" id="ocrStatusSub">फोटो प्रोसेस और डेटा एक्सट्रैक्ट हो रहा है...</p>
+                    <p class="text-xs text-slate-500 mt-1" id="ocrStatusSub">डेटा एक्सट्रैक्ट हो रहा है...</p>
                 </div>
                 <button type="button" onclick="skipOcrWaiting()" class="text-xs text-blue-600 font-bold underline">
                     इंतज़ार न करें, सीधे फॉर्म खोलें &gt;
@@ -467,7 +467,7 @@
             recalcInvoiceTotals();
         }
 
-        // Lightweight Resizer: S24 Ultra की 15MB फोटो को बिना अटके 150KB में बदलना
+        // Lightweight Resizer
         function scaleImageDown(file) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -523,17 +523,29 @@
         }
 
         async function runGeminiBillOcr(rawBase64, key) {
-            // ऑटो-फॉलबैक मॉडल्स लिस्ट
-            const candidateModels = [
-                'gemini-2.5-flash',
-                'gemini-2.0-flash',
-                'gemini-2.0-flash-exp',
-                'gemini-1.5-flash-latest'
-            ];
+            const cleanKey = encodeURIComponent(key.trim());
+            let activeModel = "gemini-2.0-flash";
             let rawText = "";
             let lastError = "";
 
-            const promptText = `Extract Indian retail textile invoice details into strictly valid JSON without any markdown or code blocks:
+            // 1. Google से एक्टिव मॉडल का नाम खुद खोजना
+            try {
+                const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+                if (listRes.ok) {
+                    const listData = await listRes.json();
+                    const found = listData.models?.find(m => 
+                        m.supportedGenerationMethods?.includes("generateContent") && 
+                        (m.name.includes("flash") || m.name.includes("gemini"))
+                    );
+                    if (found) {
+                        activeModel = found.name.replace("models/", "");
+                    }
+                }
+            } catch (e) {
+                console.warn("Using default model");
+            }
+
+            const promptText = `Extract Indian retail textile invoice details into strictly valid JSON without markdown:
 {
   "supplierName": "",
   "invoiceNo": "",
@@ -551,16 +563,17 @@
   ]
 }`;
 
-            for (const model of candidateModels) {
+            // 2. ऑटो-डिटेक्टेड मॉडल और फॉलबैक एंडपॉइंट्स पर रिक्वेस्ट भेजना
+            const endpoints = [
+                `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${cleanKey}`,
+                `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${cleanKey}`
+            ];
+
+            for (const url of endpoints) {
                 try {
-                    const cleanKey = encodeURIComponent(key.trim());
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
-                    
                     const res = await fetch(url, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
@@ -568,9 +581,7 @@
                                     { inlineData: { mimeType: 'image/jpeg', data: rawBase64 } }
                                 ]
                             }],
-                            generationConfig: {
-                                responseMimeType: "application/json"
-                            }
+                            generationConfig: { responseMimeType: "application/json" }
                         })
                     });
 
