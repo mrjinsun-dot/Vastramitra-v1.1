@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>वस्त्रमित्र - Retail Management (v1.7)</title>
+    <title>वस्त्रमित्र - Retail Management (v1.8)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -22,7 +22,7 @@
                 <div>
                     <h1 class="text-base font-bold leading-tight flex items-center gap-1.5">
                         वस्त्रमित्र
-                        <span class="text-[10px] bg-blue-500/30 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">v1.7</span>
+                        <span class="text-[10px] bg-blue-500/30 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">v1.8</span>
                     </h1>
                     <p class="text-[11px] text-slate-300">परचेज़, काउंटर सेल व सप्लायर लेज़र</p>
                 </div>
@@ -517,13 +517,19 @@
                 const base64Data = await scaleImageDown(file);
                 await runGeminiBillOcr(base64Data, activeKey);
             } catch (err) {
-                showToast("फ़ोटो एरर: " + err.message, "error");
+                showToast("फ़ोटो प्रोसेस एरर: " + err.message, "error");
                 skipOcrWaiting();
             }
         }
 
         async function runGeminiBillOcr(rawBase64, key) {
-            const candidateModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+            // ऑटो-फॉलबैक मॉडल्स लिस्ट
+            const candidateModels = [
+                'gemini-2.5-flash',
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-exp',
+                'gemini-1.5-flash-latest'
+            ];
             let rawText = "";
             let lastError = "";
 
@@ -561,7 +567,10 @@
                                     { text: promptText },
                                     { inlineData: { mimeType: 'image/jpeg', data: rawBase64 } }
                                 ]
-                            }]
+                            }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
                         })
                     });
 
